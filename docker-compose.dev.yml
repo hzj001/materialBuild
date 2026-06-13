@@ -1,0 +1,86 @@
+# 建材通 Docker 开发编排 - 前后分离热更新
+# 用法: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+name: materialBuild
+
+services:
+  mysql:
+    ports:
+      - "${MYSQL_PORT:-4306}:3306"
+
+  redis:
+    ports:
+      - "${REDIS_PORT:-4379}:6379"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: mb-backend-dev
+    restart: unless-stopped
+    environment:
+      CONFIG_FILE: /app/config.docker.yaml
+      DATABASE_HOST: mysql
+      DATABASE_PORT: 3306
+      DATABASE_USER: material
+      DATABASE_PASSWORD: ${MYSQL_PASSWORD:-materialbuild123}
+      DATABASE_DBNAME: material_build
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      GIN_MODE: debug
+    ports:
+      - "${BACKEND_PORT:-4008}:8080"
+    volumes:
+      - ./backend:/app
+      - go_mod_cache:/go/pkg/mod
+      - upload_data:/app/uploads
+    networks:
+      - materialBuild-net
+
+  frontend-client:
+    build:
+      context: ./frontend
+      dockerfile: docker/Dockerfile.dev
+      args:
+        APP_DIR: client
+    container_name: mb-frontend-client-dev
+    volumes:
+      - ./frontend/client:/usr/share/nginx/html
+      - ./frontend/shared:/usr/share/nginx/html/shared
+      - ./frontend/docker/nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "${CLIENT_PORT:-4000}:80"
+
+  frontend-merchant:
+    build:
+      context: ./frontend
+      dockerfile: docker/Dockerfile.dev
+      args:
+        APP_DIR: merchant
+    container_name: mb-frontend-merchant-dev
+    volumes:
+      - ./frontend/merchant:/usr/share/nginx/html
+      - ./frontend/shared:/usr/share/nginx/html/shared
+      - ./frontend/docker/nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "${MERCHANT_PORT:-4001}:80"
+
+  frontend-admin:
+    build:
+      context: ./frontend/admin
+      dockerfile: Dockerfile.dev
+    container_name: mb-frontend-admin-dev
+    depends_on:
+      - backend
+    environment:
+      VITE_API_PROXY: http://backend:8080
+    volumes:
+      - ./frontend/admin:/app
+      - admin_node_modules:/app/node_modules
+    ports:
+      - "${ADMIN_PORT:-4002}:4002"
+
+volumes:
+  go_mod_cache:
+    name: materialBuild-go-mod-cache
+  admin_node_modules:
+    name: materialBuild-admin-node-modules

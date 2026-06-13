@@ -1,0 +1,31 @@
+package middleware
+
+import (
+	"material-build/pkg/config"
+
+	"github.com/gin-gonic/gin"
+)
+
+func CORS(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		origin := c.GetHeader("Origin")
+		allowed := false
+		for _, o := range cfg.CORS.AllowOrigins {
+			if o == origin || o == "*" {
+				allowed = true
+				break
+			}
+		}
+		if allowed {
+			c.Header("Access-Control-Allow-Origin", origin)
+		}
+		c.Header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Content-Type,Authorization")
+		c.Header("Access-Control-Allow-Credentials", "true")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
+	}
+}

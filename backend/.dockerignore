@@ -1,0 +1,6 @@
+tmp/
+uploads/
+server.exe
+*.exe
+.git
+.air.toml

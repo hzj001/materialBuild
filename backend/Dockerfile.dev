@@ -1,0 +1,19 @@
+# 建材通后端 - 开发镜像（Air 热重载）
+FROM golang:1.22-alpine
+
+RUN apk add --no-cache git ca-certificates tzdata \
+    && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+RUN go env -w GOPROXY=https://goproxy.cn,direct \
+    && go install github.com/air-verse/air@v1.52.3
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY .air.toml .
+COPY config.docker.yaml .
+
+EXPOSE 8080
+CMD ["air", "-c", ".air.toml"]

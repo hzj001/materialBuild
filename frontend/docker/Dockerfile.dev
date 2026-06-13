@@ -1,0 +1,10 @@
+# 建材通前端 - 开发镜像（挂载源码热更新）
+FROM nginx:1.25-alpine
+
+ARG APP_DIR=client
+
+COPY shared/ /usr/share/nginx/html/shared/
+COPY ${APP_DIR}/ /usr/share/nginx/html/
+COPY docker/nginx.dev.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80

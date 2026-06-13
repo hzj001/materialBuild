@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#1a1a2e">
+  <title>建材通商家版</title>
+  <link rel="stylesheet" href="/shared/css/base.css">
+</head>
+<body>
+  <div id="app"></div>
+
+  <nav class="tabbar" id="tabbar">
+    <a class="tabbar-item active" data-route="/" onclick="Router.navigate('/')">
+      <span class="icon">📊</span><span>工作台</span>
+    </a>
+    <a class="tabbar-item" data-route="/products" onclick="Router.navigate('/products')">
+      <span class="icon">📦</span><span>商品</span>
+    </a>
+    <a class="tabbar-item" data-route="/orders" onclick="Router.navigate('/orders')">
+      <span class="icon">📋</span><span>订单</span>
+    </a>
+    <a class="tabbar-item" data-route="/mine" onclick="Router.navigate('/mine')">
+      <span class="icon">🏪</span><span>店铺</span>
+    </a>
+  </nav>
+
+  <script src="/shared/js/store.js"></script>
+  <script src="/shared/js/http.js"></script>
+  <script src="/shared/js/router.js"></script>
+  <script src="/shared/js/ui.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

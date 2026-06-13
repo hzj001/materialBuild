@@ -1,0 +1,39 @@
+server:
+  port: 8080
+  mode: debug
+
+database:
+  host: mysql
+  port: 3306
+  user: material
+  password: materialbuild123
+  dbname: material_build
+  charset: utf8mb4
+
+redis:
+  host: redis
+  port: 6379
+  password: ""
+  db: 0
+
+jwt:
+  secret: material-build-jwt-secret-change-in-production
+  expire_hours: 72
+
+upload:
+  path: ./uploads
+  max_size_mb: 50
+  allowed_types:
+    - image/jpeg
+    - image/png
+    - image/webp
+    - video/mp4
+
+cors:
+  allow_origins:
+    - http://localhost:4000
+    - http://localhost:4001
+    - http://localhost:4002
+    - http://127.0.0.1:4000
+    - http://127.0.0.1:4001
+    - http://127.0.0.1:4002
