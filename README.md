@@ -18,29 +18,140 @@
 - **前端**: 客户端/商家端自研 H5；管理端 [vue-pure-admin](https://github.com/pure-admin/vue-pure-admin)（Element Plus）
 - **部署**: Docker Compose 全容器化，前后分离
 
-## Docker 一键启动（推荐）
+## 快速开始：从 GitHub 拉取并部署
+
+> 仓库地址：[https://github.com/hzj001/materialBuild](https://github.com/hzj001/materialBuild)
 
 ### 前置要求
 
-- Docker Desktop 或 Docker Engine + Compose V2
+- [Git](https://git-scm.com/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) 或 Docker Engine + Compose V2
+- 可用端口：`4000` `4001` `4002` `4008` `4306` `4379`
 
-### 开发模式（热更新）
+### 方式一：拉取预构建镜像（推荐，最快）
+
+项目已将应用镜像发布到 GitHub Container Registry（GHCR），**无需本地编译**，直接拉取即可运行。
+
+**1. 克隆代码**
 
 ```bash
-# 复制环境变量
+git clone https://github.com/hzj001/materialBuild.git
+cd materialBuild
+```
+
+**2. 配置环境变量**
+
+```bash
+cp .env.example .env
+```
+
+`.env` 中可按需修改端口与数据库密码，默认即可本地试用。
+
+**3. 拉取并启动全部服务**
+
+```bash
+docker compose -f docker-compose.ghcr.yml pull
+docker compose -f docker-compose.ghcr.yml up -d
+```
+
+Windows PowerShell 同样适用上述命令。
+
+**4. 验证部署**
+
+| 检查项 | 地址 / 命令 |
+|---|---|
+| 客户端 | http://localhost:4000 |
+| 商家端 | http://localhost:4001 |
+| 管理后台 | http://localhost:4002 |
+| 后端健康检查 | http://localhost:4008/health |
+| 容器状态 | `docker compose -f docker-compose.ghcr.yml ps` |
+| 查看日志 | `docker compose -f docker-compose.ghcr.yml logs -f backend` |
+
+默认管理员账号：`13800000000` / `admin123`
+
+**5. 停止 / 重置**
+
+```bash
+# 停止服务（保留数据）
+docker compose -f docker-compose.ghcr.yml down
+
+# 停止并清空数据库等数据卷（重置为初始状态）
+docker compose -f docker-compose.ghcr.yml down -v
+```
+
+#### GHCR 预构建镜像列表
+
+| 镜像 | 说明 |
+|---|---|
+| `ghcr.io/hzj001/materialbuild-backend:latest` | Go API 后端 |
+| `ghcr.io/hzj001/materialbuild-client:latest` | 客户端 H5 |
+| `ghcr.io/hzj001/materialbuild-merchant:latest` | 商家端 H5 |
+| `ghcr.io/hzj001/materialbuild-admin:latest` | vue-pure-admin 管理后台 |
+
+MySQL、Redis 仍使用 Docker Hub 官方镜像（`mysql:8.0`、`redis:7-alpine`）。
+
+> **镜像可见性**：若 `docker pull` 提示未授权，请先在 GitHub 仓库 [Packages](https://github.com/hzj001/materialBuild/pkgs/container/materialbuild-backend) 页面将对应 Package 设为 **Public**，或使用 `gh auth token | docker login ghcr.io -u hzj001 --password-stdin` 登录后再拉取。
+
+> **镜像拉取慢或超时**：在 Docker Desktop → Settings → Docker Engine 添加国内镜像加速：
+> ```json
+> {
+>   "registry-mirrors": [
+>     "https://docker.1ms.run",
+>     "https://docker.m.daocloud.io"
+>   ]
+> }
+> ```
+
+---
+
+### 方式二：本地构建镜像（适合二次开发）
+
+```bash
+git clone https://github.com/hzj001/materialBuild.git
+cd materialBuild
 cp .env.example .env
 
-# 启动 materialBuild 全部服务
+# 生产模式：本地 build 全部镜像
+docker compose up --build -d
+
+# 开发模式：热更新（后端 Air + 前端挂载）
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 ```
 
-Windows PowerShell:
+Windows 开发模式快捷脚本：
 
 ```powershell
 .\scripts\docker-dev.ps1 -Detached
 ```
 
-### 访问地址
+---
+
+### 方式三：维护者发布（推送代码 + 镜像）
+
+若你是项目维护者，可将代码与容器镜像一并推送到 GitHub：
+
+```powershell
+# 1. 登录 GitHub
+gh auth login
+
+# 2. 一键推送代码 + 4 个容器镜像到 GHCR
+cd materialBuild
+.\scripts\publish-github.ps1
+```
+
+也可分步执行：
+
+```powershell
+git push -u origin main
+gh auth token | docker login ghcr.io -u hzj001 --password-stdin
+.\scripts\push-images.ps1
+```
+
+推送代码后，[GitHub Actions](.github/workflows/docker-publish.yml) 也会自动构建并发布镜像到 GHCR。
+
+---
+
+## Docker 访问地址
 
 | 服务 | 地址 |
 |---|---|
@@ -51,44 +162,33 @@ Windows PowerShell:
 | MySQL | localhost:4306 |
 | Redis | localhost:4379 |
 
-默认管理员：`13800000000` / `admin123`
-
-### 生产模式
-
-```bash
-docker compose up --build -d
-```
-
-### 使用 GitHub 预构建镜像
-
-推送代码后 GitHub Actions 自动构建容器镜像至 [GHCR Packages](https://github.com/hzj001/materialBuild/pkgs/container/materialbuild-backend)：
-
-```bash
-docker compose -f docker-compose.ghcr.yml pull
-docker compose -f docker-compose.ghcr.yml up -d
-```
-
-详细说明见 [docs/docker.md](docs/docker.md)
+更多 Docker 细节见 [docs/docker.md](docs/docker.md)
 
 ## 项目结构
 
 ```
 materialBuild/
-├── docker-compose.yml        # 生产编排
-├── docker-compose.dev.yml    # 开发编排（覆盖）
-├── .env.example              # 环境变量模板
-├── backend/                  # Go API
-│   ├── Dockerfile            # 生产镜像
-│   ├── Dockerfile.dev        # 开发镜像（Air 热重载）
-│   └── config.docker.yaml    # 容器内配置
+├── docker-compose.yml          # 生产编排（本地 build）
+├── docker-compose.dev.yml      # 开发编排（覆盖）
+├── docker-compose.ghcr.yml     # 使用 GHCR 预构建镜像（推荐部署）
+├── .github/workflows/          # GitHub Actions（自动构建推送镜像）
+├── .env.example                # 环境变量模板
+├── scripts/
+│   ├── docker-dev.ps1          # Windows 开发启动
+│   ├── publish-github.ps1      # 一键推送代码 + 镜像
+│   └── push-images.ps1         # 推送容器镜像到 GHCR
+├── backend/                    # Go API
+│   ├── Dockerfile              # 生产镜像
+│   ├── Dockerfile.dev          # 开发镜像（Air 热重载）
+│   └── config.docker.yaml      # 容器内配置
 ├── frontend/
-│   ├── shared/               # 三端共享框架
-│   ├── client/               # 客户端 H5
-│   ├── merchant/             # 商家端 H5
-│   ├── admin/                # 管理端 H5
-│   └── docker/               # Nginx 配置与 Dockerfile
-├── database/migrations/      # MySQL 初始化脚本
-└── docs/                     # 架构与 Docker 文档
+│   ├── shared/                 # 三端共享框架
+│   ├── client/                 # 客户端 H5
+│   ├── merchant/               # 商家端 H5
+│   ├── admin/                  # vue-pure-admin 管理后台
+│   └── docker/                 # Nginx 配置与 Dockerfile
+├── database/migrations/        # MySQL 初始化脚本
+└── docs/                       # 架构与 Docker 文档
 ```
 
 ## Docker 服务组（materialBuild）
