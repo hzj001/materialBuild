@@ -1,0 +1,123 @@
+# 使用 GitHub Container Registry 预构建镜像（无需本地 build）
+# 镜像由 .github/workflows/docker-publish.yml 自动构建推送
+#
+# 用法:
+#   docker compose -f docker-compose.ghcr.yml up -d
+#
+# 镜像地址: ghcr.io/hzj001/materialbuild-{backend|client|merchant|admin}
+
+name: materialBuild
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mb-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-materialbuild123}
+      MYSQL_DATABASE: material_build
+      MYSQL_USER: material
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-materialbuild123}
+      TZ: Asia/Shanghai
+    ports:
+      - "${MYSQL_PORT:-4306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql:ro
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - materialBuild-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: mb-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-4379}:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - materialBuild-net
+
+  backend:
+    image: ghcr.io/hzj001/materialbuild-backend:latest
+    container_name: mb-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      CONFIG_FILE: /app/config.docker.yaml
+      DATABASE_HOST: mysql
+      DATABASE_PORT: 3306
+      DATABASE_USER: material
+      DATABASE_PASSWORD: ${MYSQL_PASSWORD:-materialbuild123}
+      DATABASE_DBNAME: material_build
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "${BACKEND_PORT:-4008}:8080"
+    volumes:
+      - upload_data:/app/uploads
+    networks:
+      - materialBuild-net
+
+  frontend-client:
+    image: ghcr.io/hzj001/materialbuild-client:latest
+    container_name: mb-frontend-client
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${CLIENT_PORT:-4000}:80"
+    networks:
+      - materialBuild-net
+
+  frontend-merchant:
+    image: ghcr.io/hzj001/materialbuild-merchant:latest
+    container_name: mb-frontend-merchant
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${MERCHANT_PORT:-4001}:80"
+    networks:
+      - materialBuild-net
+
+  frontend-admin:
+    image: ghcr.io/hzj001/materialbuild-admin:latest
+    container_name: mb-frontend-admin
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${ADMIN_PORT:-4002}:80"
+    networks:
+      - materialBuild-net
+
+networks:
+  materialBuild-net:
+    name: materialBuild-net
+    driver: bridge
+
+volumes:
+  mysql_data:
+    name: materialBuild-mysql-data
+  redis_data:
+    name: materialBuild-redis-data
+  upload_data:
+    name: materialBuild-upload-data

@@ -44,6 +44,35 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 docker compose up --build -d
 ```
 
+## GitHub 容器镜像（GHCR）
+
+代码推送到 GitHub 后，[Actions 工作流](../.github/workflows/docker-publish.yml) 会自动构建并推送以下镜像：
+
+| 镜像 | 说明 |
+|---|---|
+| `ghcr.io/hzj001/materialbuild-backend` | Go API |
+| `ghcr.io/hzj001/materialbuild-client` | 客户端 H5 |
+| `ghcr.io/hzj001/materialbuild-merchant` | 商家端 H5 |
+| `ghcr.io/hzj001/materialbuild-admin` | 管理后台 |
+
+**直接拉取预构建镜像启动（无需本地 build）：**
+
+```bash
+cp .env.example .env
+docker compose -f docker-compose.ghcr.yml pull
+docker compose -f docker-compose.ghcr.yml up -d
+```
+
+**本地构建并推送到 GHCR：**
+
+```powershell
+gh auth login
+gh auth token | docker login ghcr.io -u hzj001 --password-stdin
+.\scripts\push-images.ps1
+```
+
+首次推送后需在 GitHub 仓库 **Packages** 中将镜像可见性设为 Public（或登录后 pull）。
+
 ## 开发特性
 
 | 组件 | 开发方式 |

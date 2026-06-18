@@ -59,6 +59,15 @@ Windows PowerShell:
 docker compose up --build -d
 ```
 
+### 使用 GitHub 预构建镜像
+
+推送代码后 GitHub Actions 自动构建容器镜像至 [GHCR Packages](https://github.com/hzj001/materialBuild/pkgs/container/materialbuild-backend)：
+
+```bash
+docker compose -f docker-compose.ghcr.yml pull
+docker compose -f docker-compose.ghcr.yml up -d
+```
+
 详细说明见 [docs/docker.md](docs/docker.md)
 
 ## 项目结构
