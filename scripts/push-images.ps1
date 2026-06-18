@@ -35,15 +35,12 @@ function Build-Push {
 
 Write-Host "Registry: $Registry, Tag: $Tag" -ForegroundColor Green
 
-# 登录 GHCR（若尚未登录）
-$null = docker push "${Registry}-backend:${Tag}" 2>&1
+# 登录 GHCR
+Write-Host ">>> 登录 GHCR..." -ForegroundColor Cyan
+& "C:\Program Files\GitHub CLI\gh.exe" auth token | docker login ghcr.io -u hzj001 --password-stdin
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "正在登录 GHCR..." -ForegroundColor Yellow
-    & "C:\Program Files\GitHub CLI\gh.exe" auth token | docker login ghcr.io -u hzj001 --password-stdin
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "请先执行: gh auth login" -ForegroundColor Red
-        exit 1
-    }
+    Write-Host "请先执行: gh auth login" -ForegroundColor Red
+    exit 1
 }
 
 Build-Push -Name "backend" -Context "$Root\backend" -Dockerfile "$Root\backend\Dockerfile"
