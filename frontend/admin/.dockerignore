@@ -1,6 +1,9 @@
 node_modules
+.pnpm-store
 dist
 .git
 .husky
 *.md
 .eslintcache
+report.html
+dist-ssr
