@@ -1,5 +1,5 @@
 # 建材通后端 - 生产镜像
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 WORKDIR /build
 RUN apk add --no-cache git ca-certificates
