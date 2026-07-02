@@ -9,6 +9,7 @@
 | Kafka | 消息队列 (KRaft 模式) | apache/kafka latest |
 | InfluxDB | 时序数据库 | 2.x latest |
 | RocketMQ | 消息队列 (namesrv + broker + proxy) | 5.3.2 |
+| IoTDB | 时序数据库 (物联网场景) | 1.3.2 standalone |
 
 编排文件:[`docker-compose.dlz-tjf-zts.yml`](../docker-compose.dlz-tjf-zts.yml)
 所有容器接入独立桥接网络 `dlz-tjf-zts-net`,数据卷均以 `dlz-tjf-zts-` 前缀命名。
@@ -139,6 +140,33 @@ docker exec dlz-tjf-zts-rmqbroker sh mqadmin updateTopic -n dlz-tjf-zts-rmqnames
 docker exec dlz-tjf-zts-rmqbroker sh mqadmin topicList -n dlz-tjf-zts-rmqnamesrv:9876
 ```
 
+### 6. Apache IoTDB 1.3.2 (单机 standalone)
+
+| 项 | 值 |
+|----|----|
+| 容器名 | `dlz-tjf-zts-iotdb` |
+| 镜像 | `docker.m.daocloud.io/apache/iotdb:1.3.2-standalone` |
+| RPC / 客户端端口 | `6667` |
+| 用户名 | `root` |
+| 密码 | `root` |
+| 数据卷 | `dlz-tjf-zts-iotdb-data`、`dlz-tjf-zts-iotdb-logs` |
+
+- JDBC/Session 连接:`localhost:6667`,账号 `root/root`
+- 命令行 CLI(容器内):
+
+```bash
+docker exec -it dlz-tjf-zts-iotdb /iotdb/sbin/start-cli.sh -h 127.0.0.1 -p 6667 -u root -pw root
+```
+
+示例 SQL:
+
+```sql
+CREATE DATABASE root.demo;
+INSERT INTO root.demo.d1(timestamp, temp) VALUES(now(), 25.6);
+SELECT * FROM root.demo.d1;
+SHOW DATABASES;
+```
+
 ---
 
 ## 三、端口一览
@@ -152,6 +180,7 @@ docker exec dlz-tjf-zts-rmqbroker sh mqadmin topicList -n dlz-tjf-zts-rmqnamesrv
 | 9876 | RocketMQ NameServer |
 | 10911 / 10909 | RocketMQ Broker |
 | 18080 / 18081 | RocketMQ Proxy |
+| 6667 | Apache IoTDB |
 
 ---
 
@@ -164,6 +193,7 @@ docker exec dlz-tjf-zts-rmqbroker sh mqadmin topicList -n dlz-tjf-zts-rmqnamesrv
 | `docker.1ms.run/apache/kafka:latest` | 686MB | 国内源 1ms.run |
 | `docker.1ms.run/library/influxdb:latest` | 404MB | 国内源 1ms.run |
 | `docker.1ms.run/apache/rocketmq:5.3.2` | ~600MB | 国内源 1ms.run |
+| `docker.m.daocloud.io/apache/iotdb:1.3.2-standalone` | ~800MB | 国内源 daocloud |
 
 > 国内拉取建议在 Docker Desktop → Settings → Docker Engine 配置镜像加速:
 > ```json
@@ -176,7 +206,7 @@ docker exec dlz-tjf-zts-rmqbroker sh mqadmin topicList -n dlz-tjf-zts-rmqnamesrv
 
 ```bash
 # 导出
-docker save elasticsearch:9.4.2 mongo:latest docker.1ms.run/apache/kafka:latest docker.1ms.run/library/influxdb:latest docker.1ms.run/apache/rocketmq:5.3.2 -o dlz-tjf-zts-images.tar
+docker save elasticsearch:9.4.2 mongo:latest docker.1ms.run/apache/kafka:latest docker.1ms.run/library/influxdb:latest docker.1ms.run/apache/rocketmq:5.3.2 docker.m.daocloud.io/apache/iotdb:1.3.2-standalone -o dlz-tjf-zts-images.tar
 
 # 在目标机器导入
 docker load -i dlz-tjf-zts-images.tar
