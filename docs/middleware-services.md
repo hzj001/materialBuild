@@ -167,6 +167,14 @@ SELECT * FROM root.demo.d1;
 SHOW DATABASES;
 ```
 
+> **客户端工具提示**:IoTDB 使用自有的 Thrift/RPC 协议,**Navicat 不支持 IoTDB**。请使用以下方式之一连接:
+> - IoTDB 自带 CLI(见上)
+> - **DBeaver**(通过 IoTDB JDBC 驱动,连接串 `jdbc:iotdb://localhost:6667/`)
+> - **IoTDB-Workbench** 官方 Web 可视化工具
+> - Java/Python 等语言的 IoTDB Session SDK
+>
+> 注意:`dn_rpc_address` 必须设为 `0.0.0.0`(而非容器名),否则 RPC 服务只绑定容器内网 IP,宿主机 `localhost:6667` 将无法连接。
+
 ---
 
 ## 三、端口一览

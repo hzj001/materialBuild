@@ -168,7 +168,7 @@ services:
     environment:
       - cn_internal_address=dlz-tjf-zts-iotdb
       - cn_seed_config_node=dlz-tjf-zts-iotdb:10710
-      - dn_rpc_address=dlz-tjf-zts-iotdb
+      - dn_rpc_address=0.0.0.0
       - dn_internal_address=dlz-tjf-zts-iotdb
       - dn_seed_config_node=dlz-tjf-zts-iotdb:10710
     ports:
